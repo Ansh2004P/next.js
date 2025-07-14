@@ -1,23 +1,27 @@
-import { headers } from 'next/headers'
+import { connection } from 'next/server'
+import { Suspense } from 'react'
+
+async function DynamicMarker() {
+  // This component renders nothing, but it will always
+  // be dynamic because it waits for an actual connection.
+
+  await connection()
+  return null
+}
 
 // Dynamic usage in page, wrapped with Suspense boundary
 export default function Page() {
   return (
     <div>
       <h1>Dynamic Page</h1>
-      <SubComponent />
+      <Suspense>
+        <DynamicMarker />
+      </Suspense>
     </div>
   )
 }
 
-async function SubComponent() {
-  await headers()
-  return <div>Dynamic Headers</div>
-}
-
 export async function generateMetadata() {
-  // Slow but static metadata
-  await new Promise((resolve) => setTimeout(resolve, 2 * 1000))
   return {
     title: `dynamic page`,
   }

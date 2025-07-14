@@ -229,6 +229,7 @@ export class Playwright<TCurrent = undefined> {
       cpuThrottleRate?: number
       pushErrorAsConsoleLog?: boolean
       beforePageLoad?: (page: Page) => void | Promise<void>
+      defaultNavigationTimeout?: number
     }
   ) {
     await this.close()
@@ -242,7 +243,9 @@ export class Playwright<TCurrent = undefined> {
     page = await context!.newPage()
 
     page.setDefaultTimeout(defaultTimeout)
-    page.setDefaultNavigationTimeout(defaultTimeout)
+    page.setDefaultNavigationTimeout(
+      opts?.defaultNavigationTimeout ?? defaultTimeout
+    )
 
     pageLogs = []
     websocketFrames = []

@@ -29,7 +29,10 @@ describe('use-cache-hanging-inputs', () => {
     describe('when searchParams are used inside of "use cache"', () => {
       it('should show an error toast after a timeout', async () => {
         const outputIndex = next.cliOutput.length
-        const browser = await next.browser('/search-params?n=1')
+        const browser = await next.browser('/search-params?n=1', {
+          // Allow for the warmup render to complete and then the main render.
+          defaultNavigationTimeout: (10 + 50 * 2) * 1000,
+        })
 
         // The request is pending while we stall on the hanging inputs, and
         // playwright will wait for the load event before continuing. So we
@@ -83,7 +86,10 @@ describe('use-cache-hanging-inputs', () => {
     describe('when searchParams are used inside of "use cache", wrapped in try/catch', () => {
       it('should show an error toast after a timeout', async () => {
         const outputIndex = next.cliOutput.length
-        const browser = await next.browser('/search-params-caught?n=1')
+        const browser = await next.browser('/search-params-caught?n=1', {
+          // Allow for the warmup render to complete and then the main render.
+          defaultNavigationTimeout: (10 + 50 * 2) * 1000,
+        })
 
         // The request is pending while we stall on the hanging inputs, and
         // playwright will wait for the load event before continuing. So we
@@ -146,7 +152,10 @@ describe('use-cache-hanging-inputs', () => {
     describe('when an uncached promise is used inside of "use cache"', () => {
       it('should show an error toast after a timeout', async () => {
         const outputIndex = next.cliOutput.length
-        const browser = await next.browser('/uncached-promise')
+        const browser = await next.browser('/uncached-promise', {
+          // Allow for the warmup render to complete and then the main render.
+          defaultNavigationTimeout: (10 + 50 * 2) * 1000,
+        })
 
         // The request is pending while we stall on the hanging inputs, and
         // playwright will wait for the load even before continuing. So we don't
@@ -200,7 +209,10 @@ describe('use-cache-hanging-inputs', () => {
     describe('when an uncached promise is used inside of a nested "use cache"', () => {
       it('should show an error toast after a timeout', async () => {
         const outputIndex = next.cliOutput.length
-        const browser = await next.browser('/uncached-promise-nested')
+        const browser = await next.browser('/uncached-promise-nested', {
+          // Allow for the warmup render to complete and then the main render.
+          defaultNavigationTimeout: (10 + 50 * 2) * 1000,
+        })
 
         // The request is pending while we stall on the hanging inputs, and
         // playwright will wait for the load even before continuing. So we don't
@@ -254,7 +266,10 @@ describe('use-cache-hanging-inputs', () => {
     describe('when a "use cache" function is closing over an uncached promise', () => {
       it('should show an error toast after a timeout', async () => {
         const outputIndex = next.cliOutput.length
-        const browser = await next.browser('/bound-args')
+        const browser = await next.browser('/bound-args', {
+          // Allow for the warmup render to complete and then the main render.
+          defaultNavigationTimeout: (10 + 50 * 2) * 1000,
+        })
 
         // The request is pending while we stall on the hanging inputs, and
         // playwright will wait for the load even before continuing. So we don't
@@ -308,7 +323,10 @@ describe('use-cache-hanging-inputs', () => {
 
     describe('when an error is thrown', () => {
       it('should show an error overlay with only one error', async () => {
-        const browser = await next.browser('/error')
+        const browser = await next.browser('/error', {
+          // Allow for the warmup render to complete and then the main render.
+          defaultNavigationTimeout: (10 + 50 * 2) * 1000,
+        })
 
         await assertHasRedbox(browser)
 

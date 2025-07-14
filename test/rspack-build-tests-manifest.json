@@ -4498,7 +4498,7 @@
   "test/e2e/app-dir/ppr-errors/ppr-errors.test.ts": {
     "passed": [
       "ppr build errors production only outside of a suspense boundary should fail the build for uncaught errors",
-      "ppr build errors production only when a postpone call is caught and logged it should should include a message telling why",
+      "ppr build errors production only when a hanging promise error is caught and logged it should should include a message telling why",
       "ppr build errors production only within a suspense boundary should fail the build for uncaught prerender errors"
     ],
     "failed": [],
@@ -20213,8 +20213,9 @@
     "flakey": [],
     "runtimeError": false
   },
-  "test/production/standalone-mode/required-server-files/required-server-files-ppr.test.ts": {
-    "passed": [
+  "test/production/standalone-mode/required-server-files/required-server-files-cache-components.test.ts": {
+    "passed": [],
+    "failed": [
       "required server files app router middleware rewrite should work with a dynamic path with Next-Resume",
       "required server files app router should handle RSC requests",
       "required server files app router should handle prefetch RSC requests",

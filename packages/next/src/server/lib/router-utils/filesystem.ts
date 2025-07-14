@@ -408,7 +408,7 @@ export async function setupFsCheck(opts: {
     // Because we can't know if the app directory is enabled or not at this
     // stage, we assume that it is.
     rsc: new RSCPathnameNormalizer(),
-    prefetchRSC: opts.config.experimental.ppr
+    prefetchRSC: opts.config.experimental.cacheComponents
       ? new PrefetchRSCPathnameNormalizer()
       : undefined,
   }

@@ -105,7 +105,7 @@ export default function Form({
           actionProp,
           router,
           // We default to PPR. We'll discover whether or not the route supports it with the initial prefetch.
-          FetchStrategy.PPR
+          FetchStrategy.CacheComponents
         )
       }
       return () => {

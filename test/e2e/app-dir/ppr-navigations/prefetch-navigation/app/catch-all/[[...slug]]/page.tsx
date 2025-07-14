@@ -1,4 +1,4 @@
-import { unstable_noStore } from 'next/cache'
+import { connection } from 'next/server'
 import Link from 'next/link'
 import React, { Suspense } from 'react'
 
@@ -19,7 +19,7 @@ export default async function Page(props) {
   )
 }
 
-function Dynamic() {
-  unstable_noStore()
+async function Dynamic() {
+  await connection()
   return <div id="dynamic">Dynamic content</div>
 }

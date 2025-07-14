@@ -414,14 +414,14 @@ describe('app-dir - server source maps', () => {
             '\n    at Page (webpack-internal:///(rsc)/./app/bad-sourcemap/page.js:15:5)'
         )
         // Expect the invalid sourcemap warning only once per render.
-        // Dynamic I/O renders three times.
+        // Cache Components renders four times.
         // One from filterStackFrameDEV.
         // One from findSourceMapURLDEV.
         expect(
           normalizeCliOutput(next.cliOutput.slice(outputIndex)).split(
             'Invalid source map.'
           ).length - 1
-        ).toEqual(5)
+        ).toEqual(6)
       }
     } else {
       // Bundlers silently drop invalid sourcemaps.

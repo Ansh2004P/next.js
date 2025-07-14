@@ -14,7 +14,6 @@ export function bailoutToClientRendering(reason: string): void | never {
       case 'prerender':
       case 'prerender-runtime':
       case 'prerender-client':
-      case 'prerender-ppr':
       case 'prerender-legacy':
         throw new BailoutToCSRError(reason)
       case 'request':

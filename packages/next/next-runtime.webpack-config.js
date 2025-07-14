@@ -172,7 +172,11 @@ module.exports = ({ dev, turbo, bundleType, experimental, ...rest }) => {
   return {
     entry: bundleTypes[bundleType],
     target: 'node',
-    mode: dev ? 'development' : 'production',
+    mode: process.env.NEXT_DEBUG
+      ? 'development'
+      : dev
+        ? 'development'
+        : 'production',
     output: {
       path: path.join(__dirname, 'dist/compiled/next-server'),
       filename: `[name]${turbo ? '-turbo' : ''}${
@@ -181,18 +185,20 @@ module.exports = ({ dev, turbo, bundleType, experimental, ...rest }) => {
       libraryTarget: 'commonjs2',
     },
     devtool: 'source-map',
-    optimization: {
-      moduleIds: 'named',
-      minimize: true,
-      concatenateModules: true,
-      minimizer: [
-        new webpack.SwcJsMinimizerRspackPlugin({
-          minimizerOptions: {
-            mangle: dev || process.env.NEXT_SERVER_NO_MANGLE ? false : true,
-          },
-        }),
-      ],
-    },
+    optimization: process.env.NEXT_DEBUG
+      ? undefined
+      : {
+          moduleIds: 'named',
+          minimize: true,
+          concatenateModules: true,
+          minimizer: [
+            new webpack.SwcJsMinimizerRspackPlugin({
+              minimizerOptions: {
+                mangle: dev || process.env.NEXT_SERVER_NO_MANGLE ? false : true,
+              },
+            }),
+          ],
+        },
     plugins: [
       new DevToolsIgnoreListPlugin({ shouldIgnorePath }),
       new webpack.DefinePlugin({

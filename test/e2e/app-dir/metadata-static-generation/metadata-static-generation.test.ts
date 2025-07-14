@@ -1,8 +1,9 @@
 import { nextTestSetup } from 'e2e-utils'
 
-const isPPREnabled = process.env.__NEXT_EXPERIMENTAL_PPR === 'true'
+const isCacheComponentsEnabled =
+  process.env.__NEXT_EXPERIMENTAL_CACHE_COMPONENTS === 'true'
 
-;(isPPREnabled ? describe.skip : describe)(
+;(isCacheComponentsEnabled ? describe.skip : describe)(
   'app-dir - metadata-static-generation',
   () => {
     const { next, isNextDev, isNextStart } = nextTestSetup({

@@ -181,6 +181,39 @@ function assignDefaults(
     delete userConfig.experimental.dynamicIO
   }
 
+  // Handle deprecation of experimental.ppr and migrate to experimental.cacheComponents
+  // First check if ppr is set to incremental (not supported)
+  if (userConfig.experimental?.ppr === 'incremental') {
+    throw new Error(
+      `\`experimental.ppr\` cannot be set to "incremental" as cache components does not support it. Please remove it from ${configFileName}.`
+    )
+  }
+
+  // Then handle boolean ppr values
+  if (typeof userConfig.experimental?.ppr === 'boolean') {
+    warnOptionHasBeenDeprecated(
+      userConfig,
+      'experimental.ppr',
+      `\`experimental.ppr\` has been renamed to \`experimental.cacheComponents\`. Please update your ${configFileName} file accordingly.`,
+      silent
+    )
+
+    // If cacheComponents was not explicitly set by the user (i.e., it's still the default value),
+    // use the ppr value. We check against the user config, not the merged result.
+    if (userConfig.experimental?.cacheComponents === undefined) {
+      userConfig.experimental.cacheComponents = userConfig.experimental.ppr
+    } else if (
+      userConfig.experimental?.cacheComponents !== userConfig.experimental.ppr
+    ) {
+      throw new Error(
+        `\`experimental.ppr\` and \`experimental.cacheComponents\` cannot be set to different values. Please remove \`experimental.ppr\` from ${configFileName}.`
+      )
+    }
+
+    // Remove the deprecated property
+    delete userConfig.experimental.ppr
+  }
+
   const config = Object.keys(userConfig).reduce<{ [key: string]: any }>(
     (currentConfig, key) => {
       const value = userConfig[key]
@@ -286,9 +319,7 @@ function assignDefaults(
 
   if (isStableBuild()) {
     // Prevents usage of certain experimental features outside of canary
-    if (result.experimental?.ppr) {
-      throw new CanaryOnlyError({ feature: 'experimental.ppr' })
-    } else if (result.experimental?.cacheComponents) {
+    if (result.experimental?.cacheComponents) {
       throw new CanaryOnlyError({ feature: 'experimental.cacheComponents' })
     } else if (result.experimental?.turbopackPersistentCaching) {
       throw new CanaryOnlyError({
@@ -1116,20 +1147,6 @@ function assignDefaults(
     result.experimental.useCache = result.experimental.cacheComponents
   }
 
-  // If cacheComponents is enabled, we also enable PPR.
-  if (result.experimental.cacheComponents) {
-    if (
-      userConfig.experimental?.ppr === false ||
-      userConfig.experimental?.ppr === 'incremental'
-    ) {
-      throw new Error(
-        `\`experimental.ppr\` can not be \`${JSON.stringify(userConfig.experimental?.ppr)}\` when \`experimental.cacheComponents\` is \`true\`. PPR is implicitly enabled when Cache Components is enabled.`
-      )
-    }
-
-    result.experimental.ppr = true
-  }
-
   return result as NextConfigComplete
 }
 
@@ -1658,47 +1675,9 @@ function enforceExperimentalFeatures(
     )
   }
 
-  // TODO: Remove this once we've made Cache Components the default.
-  if (
-    process.env.__NEXT_EXPERIMENTAL_CACHE_COMPONENTS === 'true' &&
-    // We do respect an explicit value in the user config.
-    (config.experimental.ppr === undefined ||
-      (isDefaultConfig && !config.experimental.ppr))
-  ) {
-    config.experimental.ppr = true
-
-    if (configuredExperimentalFeatures) {
-      addConfiguredExperimentalFeature(
-        configuredExperimentalFeatures,
-        'ppr',
-        true,
-        'enabled by `__NEXT_EXPERIMENTAL_CACHE_COMPONENTS`'
-      )
-    }
-  }
-
-  // TODO: Remove this once we've made Cache Components the default.
-  if (
-    process.env.__NEXT_EXPERIMENTAL_PPR === 'true' &&
-    // We do respect an explicit value in the user config.
-    (config.experimental.ppr === undefined ||
-      (isDefaultConfig && !config.experimental.ppr))
-  ) {
-    config.experimental.ppr = true
-
-    if (configuredExperimentalFeatures) {
-      addConfiguredExperimentalFeature(
-        configuredExperimentalFeatures,
-        'ppr',
-        true,
-        'enabled by `__NEXT_EXPERIMENTAL_PPR`'
-      )
-    }
-  }
-
   // TODO: Remove this once we've made Client Segment Cache the default.
   if (
-    process.env.__NEXT_EXPERIMENTAL_PPR === 'true' &&
+    process.env.__NEXT_EXPERIMENTAL_CACHE_COMPONENTS === 'true' &&
     // We do respect an explicit value in the user config.
     (config.experimental.clientSegmentCache === undefined ||
       (isDefaultConfig && !config.experimental.clientSegmentCache))
@@ -1710,7 +1689,7 @@ function enforceExperimentalFeatures(
         configuredExperimentalFeatures,
         'clientSegmentCache',
         true,
-        'enabled by `__NEXT_EXPERIMENTAL_PPR`'
+        'enabled by `__NEXT_EXPERIMENTAL_CACHE_COMPONENTS`'
       )
     }
   }

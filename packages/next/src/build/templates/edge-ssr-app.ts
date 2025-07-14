@@ -158,7 +158,6 @@ async function requestHandler(
       serverActions: nextConfig.experimental.serverActions,
 
       experimental: {
-        isRoutePPREnabled: false,
         expireTime: nextConfig.expireTime,
         staleTimes: nextConfig.experimental.staleTimes,
         cacheComponents: Boolean(nextConfig.experimental.cacheComponents),

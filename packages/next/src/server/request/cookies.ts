@@ -15,7 +15,6 @@ import {
   type PrerenderStoreModern,
 } from '../app-render/work-unit-async-storage.external'
 import {
-  postponeWithTracking,
   throwToInterruptStaticGeneration,
   trackDynamicDataInDynamicRender,
   trackSynchronousRequestDataAccessInDev,
@@ -100,14 +99,6 @@ export function cookies(): Promise<ReadonlyRequestCookies> {
           const exportName = '`cookies`'
           throw new InvariantError(
             `${exportName} must not be used within a client component. Next.js should be preventing ${exportName} from being included in client components statically, but did not in this case.`
-          )
-        case 'prerender-ppr':
-          // We need track dynamic access here eagerly to keep continuity with
-          // how cookies has worked in PPR without cacheComponents.
-          return postponeWithTracking(
-            workStore.route,
-            callingExpression,
-            workUnitStore.dynamicTracking
           )
         case 'prerender-legacy':
           // We track dynamic access here so we don't need to wrap the cookies
@@ -477,7 +468,6 @@ function syncIODev(route: string | undefined, expression: string) {
       case 'prerender':
       case 'prerender-client':
       case 'prerender-runtime':
-      case 'prerender-ppr':
       case 'prerender-legacy':
       case 'cache':
       case 'private-cache':

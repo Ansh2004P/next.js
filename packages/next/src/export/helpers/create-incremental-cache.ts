@@ -18,6 +18,7 @@ export async function createIncrementalCache({
   flushToDisk,
   cacheHandlers,
   requestHeaders,
+  cacheComponents,
 }: {
   cacheHandler?: string
   cacheMaxMemorySize?: number
@@ -27,6 +28,7 @@ export async function createIncrementalCache({
   flushToDisk?: boolean
   requestHeaders?: Record<string, string | string[] | undefined>
   cacheHandlers?: Record<string, string | undefined>
+  cacheComponents: boolean | undefined
 }) {
   // Custom cache handler overrides.
   let CacheHandler: any
@@ -74,6 +76,7 @@ export async function createIncrementalCache({
     serverDistDir: path.join(distDir, 'server'),
     CurCacheHandler: CacheHandler,
     minimalMode: hasNextSupport,
+    cacheComponents,
   })
 
   ;(globalThis as any).__incrementalCache = incrementalCache

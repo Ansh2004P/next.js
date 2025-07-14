@@ -129,7 +129,6 @@ import { toRoute } from './lib/to-route'
 import type { DeepReadonly } from '../shared/lib/deep-readonly'
 import { isNodeNextRequest, isNodeNextResponse } from './base-http/helpers'
 import { patchSetHeaderWithCookieSupport } from './lib/patch-set-header'
-import { checkIsAppPPREnabled } from './lib/experimental/ppr'
 import {
   getBuiltinRequestContext,
   type WaitUntil,
@@ -419,7 +418,7 @@ export default abstract class Server<
     readonly data: NextDataPathnameNormalizer | undefined
   }
 
-  private readonly isAppPPREnabled: boolean
+  private readonly cacheComponents: boolean
   private readonly isAppSegmentPrefetchEnabled: boolean
 
   /**
@@ -491,9 +490,9 @@ export default abstract class Server<
 
     this.enabledDirectories = this.getEnabledDirectories(dev)
 
-    this.isAppPPREnabled =
+    this.cacheComponents =
       this.enabledDirectories.app &&
-      checkIsAppPPREnabled(this.nextConfig.experimental.ppr)
+      this.nextConfig.experimental.cacheComponents === true
 
     this.isAppSegmentPrefetchEnabled =
       this.enabledDirectories.app &&
@@ -508,7 +507,7 @@ export default abstract class Server<
           ? new RSCPathnameNormalizer()
           : undefined,
       prefetchRSC:
-        this.isAppPPREnabled && this.minimalMode
+        this.cacheComponents && this.minimalMode
           ? new PrefetchRSCPathnameNormalizer()
           : undefined,
       segmentPrefetchRSC:
@@ -1073,10 +1072,10 @@ export default abstract class Server<
           if (this.normalizers.data?.match(urlPathname)) {
             addRequestMeta(req, 'isNextDataReq', true)
           }
-          // In minimal mode, if PPR is enabled, then we should check to see if
-          // the request should be a resume request.
+          // In minimal mode, if Cache Components is enabled, then we should
+          // check to see if the request should be a resume request.
           else if (
-            this.isAppPPREnabled &&
+            this.cacheComponents &&
             this.minimalMode &&
             req.headers[NEXT_RESUME_HEADER] === '1' &&
             req.method === 'POST'
@@ -2157,41 +2156,19 @@ export default abstract class Server<
     }
 
     /**
-     * If the route being rendered is an app page, and the ppr feature has been
-     * enabled, then the given route _could_ support PPR.
+     * If the route being rendered is an app page, and the Cache Components
+     * feature has been enabled, then the given route _could_ support Cache
+     * Components.
      */
-    const couldSupportPPR: boolean =
-      this.isAppPPREnabled &&
+    const couldSupportCacheComponents: boolean =
+      this.cacheComponents &&
       typeof routeModule !== 'undefined' &&
       isAppPageRouteModule(routeModule)
-
-    // When enabled, this will allow the use of the `?__nextppronly` query to
-    // enable debugging of the static shell.
-    const hasDebugStaticShellQuery =
-      process.env.__NEXT_EXPERIMENTAL_STATIC_SHELL_DEBUGGING === '1' &&
-      typeof query.__nextppronly !== 'undefined' &&
-      couldSupportPPR
-
-    // This page supports PPR if it is marked as being `PARTIALLY_STATIC` in the
-    // prerender manifest and this is an app page.
-    const isRoutePPREnabled: boolean =
-      couldSupportPPR &&
-      ((
-        prerenderManifest.routes[pathname] ??
-        prerenderManifest.dynamicRoutes[pathname]
-      )?.renderingMode === 'PARTIALLY_STATIC' ||
-        // Ideally we'd want to check the appConfig to see if this page has PPR
-        // enabled or not, but that would require plumbing the appConfig through
-        // to the server during development. We assume that the page supports it
-        // but only during development.
-        (hasDebugStaticShellQuery &&
-          (this.renderOpts.dev === true ||
-            this.experimentalTestProxy === true)))
 
     // If we're in minimal mode, then try to get the postponed information from
     // the request metadata. If available, use it for resuming the postponed
     // render.
-    const minimalPostponed = isRoutePPREnabled
+    const minimalPostponed = couldSupportCacheComponents
       ? getRequestMeta(req, 'postponed')
       : undefined
 

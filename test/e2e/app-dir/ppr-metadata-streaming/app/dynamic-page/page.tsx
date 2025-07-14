@@ -1,11 +1,14 @@
 import { headers } from 'next/headers'
+import { Suspense } from 'react'
 
 // Dynamic usage in page, wrapped with Suspense boundary
 export default function Page() {
   return (
     <div>
       <h1>Dynamic Page</h1>
-      <SubComponent />
+      <Suspense>
+        <SubComponent />
+      </Suspense>
     </div>
   )
 }

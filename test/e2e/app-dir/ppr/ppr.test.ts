@@ -13,7 +13,7 @@ describe('ppr', () => {
   it('should indicate the feature is experimental', async () => {
     await retry(() => {
       expect(next.cliOutput).toContain('Experiments (use with caution)')
-      expect(stripAnsi(next.cliOutput)).toContain('✓ ppr')
+      expect(stripAnsi(next.cliOutput)).toContain('✓ cacheComponents')
     })
   })
   if (isNextStart) {
@@ -33,7 +33,7 @@ describe('ppr', () => {
           'NEXT_BUILD_FEATURE_USAGE'
         )
         expect(events).toContainEqual({
-          featureName: 'experimental/ppr',
+          featureName: 'experimental/cacheComponents',
           invocationCount: 1,
         })
       })
@@ -89,52 +89,50 @@ describe('ppr', () => {
     }
   })
 
-  describe.each([
-    { pathname: '/suspense/node' },
-    { pathname: '/suspense/edge' },
-  ])('with suspense for $pathname', ({ pathname }) => {
-    // When the browser loads the page, we expect that the dynamic part will
-    // be rendered.
-    it('should eventually render the dynamic part', async () => {
-      const browser = await next.browser(pathname)
+  describe.each([{ pathname: '/suspense/node' }])(
+    'with suspense for $pathname',
+    ({ pathname }) => {
+      // When the browser loads the page, we expect that the dynamic part will
+      // be rendered.
+      it('should eventually render the dynamic part', async () => {
+        const browser = await next.browser(pathname)
 
-      try {
-        // Wait for the page part to load.
-        await browser.waitForElementByCss('#page')
-        await browser.waitForIdleNetwork()
+        try {
+          // Wait for the page part to load.
+          await browser.waitForElementByCss('#page')
 
-        // Wait for the dynamic part to load.
-        await browser.waitForElementByCss('#container > #dynamic > #state')
+          // Wait for the dynamic part to load.
+          await browser.waitForElementByCss('#container > #dynamic > #state')
 
-        // Ensure we've got the right dynamic part.
-        let dynamic = await browser
-          .elementByCss('#container > #dynamic > #state')
-          .text()
+          // Ensure we've got the right dynamic part.
+          let dynamic = await browser
+            .elementByCss('#container > #dynamic > #state')
+            .text()
 
-        expect(dynamic).toBe('Not Signed In')
+          expect(dynamic).toBe('Not Signed In')
 
-        // Re-visit the page with the cookie.
-        await browser.addCookie({ name: 'session', value: '1' }).refresh()
+          // Re-visit the page with the cookie.
+          await browser.addCookie({ name: 'session', value: '1' }).refresh()
 
-        // Wait for the page part to load.
-        await browser.waitForElementByCss('#page')
-        await browser.waitForIdleNetwork()
+          // Wait for the page part to load.
+          await browser.waitForElementByCss('#page')
 
-        // Wait for the dynamic part to load.
-        await browser.waitForElementByCss('#container > #dynamic > #state')
+          // Wait for the dynamic part to load.
+          await browser.waitForElementByCss('#container > #dynamic > #state')
 
-        // Ensure we've got the right dynamic part.
-        dynamic = await browser
-          .elementByCss('#container > #dynamic > #state')
-          .text()
+          // Ensure we've got the right dynamic part.
+          dynamic = await browser
+            .elementByCss('#container > #dynamic > #state')
+            .text()
 
-        expect(dynamic).toBe('Signed In')
-      } finally {
-        await browser.deleteCookies()
-        await browser.close()
-      }
-    })
-  })
+          expect(dynamic).toBe('Signed In')
+        } finally {
+          await browser.deleteCookies()
+          await browser.close()
+        }
+      })
+    }
+  )
 
   describe('search parameters', () => {
     it('should render the page with the search parameters', async () => {
@@ -146,42 +144,6 @@ describe('ppr', () => {
 
       const html = await res.text()
       expect(html).toContain(expected)
-    })
-  })
-
-  describe.each([{ pathname: '/no-suspense' }])(
-    'without suspense for $pathname',
-    ({ pathname }) => {
-      // When the browser loads the page, we expect that the dynamic part will
-      // be rendered.
-      it('should immediately render the dynamic part', async () => {
-        let $ = await next.render$(pathname)
-
-        let dynamic = $('#container > #dynamic > #state').text()
-        expect(dynamic).toBe('Not Signed In')
-
-        // Re-visit the page with the cookie.
-        $ = await next.render$(
-          pathname,
-          {},
-          {
-            headers: {
-              cookie: 'session=1',
-            },
-          }
-        )
-
-        dynamic = $('#container > #dynamic > #state').text()
-        expect(dynamic).toBe('Signed In')
-      })
-    }
-  )
-
-  describe('/no-suspense/node/gsp/[slug]', () => {
-    it('should serve the static & dynamic parts', async () => {
-      const $ = await next.render$('/no-suspense/node/gsp/foo')
-      expect($('#page').length).toBe(1)
-      expect($('#container > #dynamic > #state').length).toBe(1)
     })
   })
 

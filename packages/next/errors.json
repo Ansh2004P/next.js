@@ -773,5 +773,10 @@
   "772": "FetchStrategy.PPRRuntime should never be used when `experimental.clientSegmentCache` is disabled",
   "773": "Missing workStore in createPrerenderParamsForClientSegment",
   "774": "Route %s used %s outside of a Server Component. This is not allowed.",
-  "775": "Node.js instrumentation extensions should not be loaded in the Edge runtime."
+  "775": "Node.js instrumentation extensions should not be loaded in the Edge runtime.",
+  "776": "Invariant: page postponed without cache components being enabled",
+  "777": "createPrerenderPathname cannot be called with the prerender-legacy work unit type.",
+  "778": "\\`experimental.ppr\\` cannot be set to \"incremental\" as cache components does not support it. Please remove it from %s.",
+  "779": "Invariant: cache components cannot be enabled in export mode",
+  "780": "\\`experimental.ppr\\` and \\`experimental.cacheComponents\\` cannot be set to different values. Please remove \\`experimental.ppr\\` from %s."
 }

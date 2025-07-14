@@ -147,8 +147,8 @@ export const enum FetchStrategy {
   // and determine if one segment is "more specific" than another
   // (i.e. if it's likely that it contains more data)
   LoadingBoundary = 0,
-  PPR = 1,
-  PPRRuntime = 2,
+  CacheComponents = 1,
+  CacheComponentsRuntime = 2,
   Full = 3,
 }
 
@@ -159,6 +159,6 @@ export const enum FetchStrategy {
  * and adjust it based on the route when actually fetching.
  * */
 export type PrefetchTaskFetchStrategy =
-  | FetchStrategy.PPR
-  | FetchStrategy.PPRRuntime
+  | FetchStrategy.CacheComponents
+  | FetchStrategy.CacheComponentsRuntime
   | FetchStrategy.Full

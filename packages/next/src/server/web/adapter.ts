@@ -210,7 +210,8 @@ export async function adapter(
       fetchCacheKeyPrefix: process.env.__NEXT_FETCH_CACHE_KEY_PREFIX,
       dev: process.env.NODE_ENV === 'development',
       requestHeaders: params.request.headers as any,
-
+      // Edge Runtime doesn't support cache components.
+      cacheComponents: false,
       getPrerenderManifest: () => {
         return {
           version: -1 as any, // letting us know this doesn't conform to spec
@@ -287,7 +288,6 @@ export async function adapter(
                 cacheLifeProfiles:
                   params.request.nextConfig?.experimental?.cacheLife,
                 experimental: {
-                  isRoutePPREnabled: false,
                   cacheComponents: false,
                   authInterrupts:
                     !!params.request.nextConfig?.experimental?.authInterrupts,

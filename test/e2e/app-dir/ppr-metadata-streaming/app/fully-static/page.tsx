@@ -3,6 +3,8 @@ export default function Page() {
 }
 
 export async function generateMetadata() {
+  'use cache'
+
   await new Promise((resolve) => setTimeout(resolve, 2 * 1000))
   return {
     title: 'fully static',

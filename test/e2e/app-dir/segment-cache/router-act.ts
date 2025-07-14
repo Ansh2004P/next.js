@@ -289,7 +289,8 @@ URL: ${url}
 Headers: ${JSON.stringify(fulfilled.headers)}
 
 Response:
-${fulfilled.body}
+  Headers: ${JSON.stringify(fulfilled.headers, null, 2)}
+  Body: ${fulfilled.body}
 `
 
               throw error

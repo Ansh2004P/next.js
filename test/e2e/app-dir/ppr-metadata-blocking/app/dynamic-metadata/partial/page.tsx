@@ -11,7 +11,7 @@ export default function Page() {
 
 async function SuspendedComponent() {
   await connection()
-  await new Promise((resolve) => setTimeout(resolve, 500))
+
   return (
     <div>
       <div>suspended component</div>
@@ -22,13 +22,13 @@ async function SuspendedComponent() {
 
 async function NestedSuspendedComponent() {
   await connection()
-  await new Promise((resolve) => setTimeout(resolve, 500))
+
   return <div>nested suspended component</div>
 }
 
 export async function generateMetadata() {
   await connection()
-  await new Promise((resolve) => setTimeout(resolve, 3 * 1000))
+
   return {
     title: 'dynamic-metadata - partial',
     description: `dynamic metadata - ${Math.random()}`,

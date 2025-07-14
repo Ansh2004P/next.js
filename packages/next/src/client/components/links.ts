@@ -371,7 +371,7 @@ function prefetchWithOldCacheImplementation(instance: PrefetchableInstance) {
 
     let prefetchKind: PrefetchKind
     switch (instance.fetchStrategy) {
-      case FetchStrategy.PPR: {
+      case FetchStrategy.CacheComponents: {
         prefetchKind = PrefetchKind.AUTO
         break
       }
@@ -379,7 +379,7 @@ function prefetchWithOldCacheImplementation(instance: PrefetchableInstance) {
         prefetchKind = PrefetchKind.FULL
         break
       }
-      case FetchStrategy.PPRRuntime: {
+      case FetchStrategy.CacheComponentsRuntime: {
         // We can only get here if Client Segment Cache is off, and in that case
         // it shouldn't be possible for a link to request a runtime prefetch.
         throw new InvariantError(

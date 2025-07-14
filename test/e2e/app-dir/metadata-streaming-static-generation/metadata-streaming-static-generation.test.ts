@@ -1,10 +1,11 @@
 import { nextTestSetup } from 'e2e-utils'
 import { retry } from 'next-test-utils'
 
-const isPPREnabled = process.env.__NEXT_EXPERIMENTAL_PPR === 'true'
+const isCacheComponentsEnabled =
+  process.env.__NEXT_EXPERIMENTAL_CACHE_COMPONENTS === 'true'
 
 // Skip PPR test as it's covered in test/e2e/app-dir/ppr-metadata-streaming/ppr-metadata-streaming.test.ts
-;(isPPREnabled ? describe.skip : describe)(
+;(isCacheComponentsEnabled ? describe.skip : describe)(
   'app-dir - metadata-streaming-static-generation',
   () => {
     const { next, isNextDev, isNextStart } = nextTestSetup({

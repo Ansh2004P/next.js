@@ -364,7 +364,7 @@ export default function LinkComponent(
     prefetchProp !== false
       ? getFetchStrategyFromPrefetchProp(prefetchProp)
       : // TODO: it makes no sense to assign a fetchStrategy when prefetching is disabled.
-        FetchStrategy.PPR
+        FetchStrategy.CacheComponents
 
   if (process.env.NODE_ENV !== 'production') {
     function createPropError(args: {
@@ -757,7 +757,7 @@ function getFetchStrategyFromPrefetchProp(
     // - `unstable_forceStale` is a "full" prefetch
     //   (forces inclusion of all dynamic data, i.e. the old behavior of `prefetch={true}`)
     if (prefetchProp === true) {
-      return FetchStrategy.PPRRuntime
+      return FetchStrategy.CacheComponentsRuntime
     }
     if (prefetchProp === 'unstable_forceStale') {
       return FetchStrategy.Full
@@ -769,12 +769,12 @@ function getFetchStrategyFromPrefetchProp(
     prefetchProp satisfies null | 'auto'
     // In `clientSegmentCache`, we default to PPR, and we'll discover whether or not the route supports it with the initial prefetch.
     // If we're not using `clientSegmentCache`, this will be converted into a `PrefetchKind.AUTO`.
-    return FetchStrategy.PPR
+    return FetchStrategy.CacheComponents
   } else {
     return prefetchProp === null || prefetchProp === 'auto'
       ? // In `clientSegmentCache`, we default to PPR, and we'll discover whether or not the route supports it with the initial prefetch.
         // If we're not using `clientSegmentCache`, this will be converted into a `PrefetchKind.AUTO`.
-        FetchStrategy.PPR
+        FetchStrategy.CacheComponents
       : // In the old implementation without runtime prefetches, `prefetch={true}` forces all dynamic data to be prefetched.
         // To preserve backwards-compatibility, anything other than `false`, `null`, or `"auto"` results in a full prefetch.
         // (although invalid values should've been filtered out by prop validation in dev)

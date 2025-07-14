@@ -10,7 +10,8 @@ import {
 // TODO: We should decide on an established pattern for gating test assertions
 // on experimental flags. For example, as a first step we could all the common
 // gates like this one into a single module.
-const isPPREnabledByDefault = process.env.__NEXT_EXPERIMENTAL_PPR === 'true'
+const isCacheComponentsEnabledByDefault =
+  process.env.__NEXT_EXPERIMENTAL_CACHE_COMPONENTS === 'true'
 
 describe('app dir - basic', () => {
   const { next, isNextDev, isNextStart, isNextDeploy, isTurbopack } =
@@ -599,9 +600,9 @@ describe('app dir - basic', () => {
 
   // TODO-APP: Enable in development
   ;(isNextDev ||
-    // When PPR is enabled, the shared layouts re-render because we prefetch
+    // When Cache Components is enabled, the shared layouts re-render because we prefetch
     // from the root. This will be addressed before GA.
-    isPPREnabledByDefault
+    isCacheComponentsEnabledByDefault
     ? it.skip
     : it)(
     'should not rerender layout when navigating between routes in the same layout',
@@ -1396,9 +1397,9 @@ describe('app dir - basic', () => {
 
     // TODO-APP: disable failing test and investigate later
     ;(isNextDev ||
-      // When PPR is enabled, the shared layouts re-render because we prefetch
+      // When Cache Components is enabled, the shared layouts re-render because we prefetch
       // from the root. This will be addressed before GA.
-      isPPREnabledByDefault
+      isCacheComponentsEnabledByDefault
       ? it.skip
       : it)(
       'should render the template that is a server component and rerender on navigation',

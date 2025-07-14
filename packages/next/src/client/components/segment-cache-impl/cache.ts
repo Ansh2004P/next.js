@@ -112,9 +112,9 @@ export type RouteTree = {
 
   // If this is a dynamic route, indicates whether there is a loading boundary
   // somewhere in the tree. If not, we can skip the prefetch for the data,
-  // because we know it would be an empty response. (For a static/PPR route,
-  // this value is disregarded, because in that model `loading.tsx` is treated
-  // like any other Suspense boundary.)
+  // because we know it would be an empty response. (For a static/Cache
+  // Components route, this value is disregarded, because in that model
+  // `loading.tsx` is treated like any other Suspense boundary.)
   hasLoadingBoundary: HasLoadingBoundary
 }
 
@@ -155,7 +155,7 @@ type PendingRouteCacheEntry = RouteCacheEntryShared & {
   tree: null
   head: HeadData | null
   isHeadPartial: true
-  isPPREnabled: false
+  isCacheComponentsEnabled: false
 }
 
 type RejectedRouteCacheEntry = RouteCacheEntryShared & {
@@ -166,7 +166,7 @@ type RejectedRouteCacheEntry = RouteCacheEntryShared & {
   tree: null
   head: null
   isHeadPartial: true
-  isPPREnabled: boolean
+  isCacheComponentsEnabled: boolean
 }
 
 export type FulfilledRouteCacheEntry = RouteCacheEntryShared & {
@@ -177,7 +177,7 @@ export type FulfilledRouteCacheEntry = RouteCacheEntryShared & {
   tree: RouteTree
   head: HeadData
   isHeadPartial: boolean
-  isPPREnabled: boolean
+  isCacheComponentsEnabled: boolean
 }
 
 export type RouteCacheEntry =
@@ -431,8 +431,8 @@ export function getSegmentKeypathForTask(
   // cache entry is valid for all possible search param values.
   const isDynamicTask =
     task.fetchStrategy === FetchStrategy.Full ||
-    task.fetchStrategy === FetchStrategy.PPRRuntime ||
-    !route.isPPREnabled
+    task.fetchStrategy === FetchStrategy.CacheComponentsRuntime ||
+    !route.isCacheComponentsEnabled
   return isDynamicTask && cacheKey.endsWith('/' + PAGE_SEGMENT_KEY)
     ? [cacheKey, route.renderedSearch]
     : [cacheKey]
@@ -464,8 +464,8 @@ export function readSegmentCacheEntry(
 
   // If we did not find an entry with the given search params, check for a
   // "fallback" entry, where the search params are treated as dynamic data. This
-  // is the common case because PPR/static prerenders always treat search params
-  // as dynamic.
+  // is the common case because cache components/static prerenders always treat
+  // search params as dynamic.
   //
   // See corresponding logic in `getSegmentKeypathForTask`.
   const entryWithoutSearchParams = readExactSegmentCacheEntry(now, [cacheKey])
@@ -572,8 +572,8 @@ export function readOrCreateRouteCacheEntry(
     // could be intercepted. It's only set to false once we receive a response
     // from the server.
     couldBeIntercepted: true,
-    // Similarly, we don't yet know if the route supports PPR.
-    isPPREnabled: false,
+    // Similarly, we don't yet know if the route supports cache components.
+    isCacheComponentsEnabled: false,
     renderedSearch: null,
 
     TODO_metadataStatus: EntryStatus.Empty,
@@ -700,9 +700,9 @@ export function createDetachedSegmentCacheEntry(
 ): EmptySegmentCacheEntry {
   const emptyEntry: EmptySegmentCacheEntry = {
     status: EntryStatus.Empty,
-    // Default to assuming the fetch strategy will be PPR. This will be updated
-    // when a fetch is actually initiated.
-    fetchStrategy: FetchStrategy.PPR,
+    // Default to assuming the fetch strategy will be cache components. This
+    // will be updated when a fetch is actually initiated.
+    fetchStrategy: FetchStrategy.CacheComponents,
     revalidating: null,
     rsc: null,
     loading: null,
@@ -822,7 +822,7 @@ function fulfillRouteCacheEntry(
   couldBeIntercepted: boolean,
   canonicalUrl: string,
   renderedSearch: NormalizedSearch,
-  isPPREnabled: boolean
+  isCacheComponentsEnabled: boolean
 ): FulfilledRouteCacheEntry {
   const fulfilledEntry: FulfilledRouteCacheEntry = entry as any
   fulfilledEntry.status = EntryStatus.Fulfilled
@@ -833,7 +833,7 @@ function fulfillRouteCacheEntry(
   fulfilledEntry.couldBeIntercepted = couldBeIntercepted
   fulfilledEntry.canonicalUrl = canonicalUrl
   fulfilledEntry.renderedSearch = renderedSearch
-  fulfilledEntry.isPPREnabled = isPPREnabled
+  fulfilledEntry.isCacheComponentsEnabled = isCacheComponentsEnabled
   pingBlockedTasks(entry)
   return fulfilledEntry
 }
@@ -988,8 +988,8 @@ function convertTreePrefetchToRouteTree(
     param,
     slots,
     isRootLayout: prefetch.isRootLayout,
-    // This field is only relevant to dynamic routes. For a PPR/static route,
-    // there's always some partial loading state we can fetch.
+    // This field is only relevant to dynamic routes. For a cache components/
+    // static route, there's always some partial loading state we can fetch.
     hasLoadingBoundary: HasLoadingBoundary.SegmentHasLoadingBoundary,
   }
 }
@@ -1194,8 +1194,8 @@ export async function fetchRouteOnCacheMiss(
       !response ||
       !response.ok ||
       // 204 is a Cache miss. Though theoretically this shouldn't happen when
-      // PPR is enabled, because we always respond to route tree requests, even
-      // if it needs to be blockingly generated on demand.
+      // cache components is enabled, because we always respond to route tree
+      // requests, even if it needs to be blockingly generated on demand.
       response.status === 204 ||
       !response.body
     ) {
@@ -1229,16 +1229,16 @@ export async function fetchRouteOnCacheMiss(
     const closed = createPromiseWithResolvers<void>()
 
     // This checks whether the response was served from the per-segment cache,
-    // rather than the old prefetching flow. If it fails, it implies that PPR
-    // is disabled on this route.
-    const routeIsPPREnabled =
+    // rather than the old prefetching flow. If it fails, it implies that cache
+    // components is disabled on this route.
+    const routeIsCacheComponentsEnabled =
       response.headers.get(NEXT_DID_POSTPONE_HEADER) === '2' ||
       // In output: "export" mode, we can't rely on response headers. But if we
       // receive a well-formed response, we can assume it's a static response,
       // because all data is static in this mode.
       isOutputExportMode
 
-    if (routeIsPPREnabled) {
+    if (routeIsCacheComponentsEnabled) {
       const prefetchStream = createPrefetchResponseStream(
         response.body,
         closed.resolve,
@@ -1281,10 +1281,10 @@ export async function fetchRouteOnCacheMiss(
         couldBeIntercepted,
         canonicalUrl,
         renderedSearch,
-        routeIsPPREnabled
+        routeIsCacheComponentsEnabled
       )
     } else {
-      // PPR is not enabled for this route. The server responds with a
+      // cache components is not enabled for this route. The server responds with a
       // different format (FlightRouterState) that we need to convert.
       // TODO: We will unify the responses eventually. I'm keeping the types
       // separate for now because FlightRouterState has so many
@@ -1321,7 +1321,7 @@ export async function fetchRouteOnCacheMiss(
         entry,
         couldBeIntercepted,
         canonicalUrl,
-        routeIsPPREnabled
+        routeIsCacheComponentsEnabled
       )
     }
 
@@ -1412,10 +1412,10 @@ export async function fetchSegmentOnCacheMiss(
       !response.ok ||
       response.status === 204 || // Cache miss
       // This checks whether the response was served from the per-segment cache,
-      // rather than the old prefetching flow. If it fails, it implies that PPR
-      // is disabled on this route. Theoretically this should never happen
-      // because we only issue requests for segments once we've verified that
-      // the route supports PPR.
+      // rather than the old prefetching flow. If it fails, it implies that cache
+      // components is disabled on this route. Theoretically this should never
+      // happen because we only issue requests for segments once we've verified
+      // that the route supports cache components.
       (response.headers.get(NEXT_DID_POSTPONE_HEADER) !== '2' &&
         // In output: "export" mode, we can't rely on response headers. But if
         // we receive a well-formed response, we can assume it's a static
@@ -1480,7 +1480,7 @@ export async function fetchSegmentPrefetchesUsingDynamicRequest(
   route: FulfilledRouteCacheEntry,
   fetchStrategy:
     | FetchStrategy.LoadingBoundary
-    | FetchStrategy.PPRRuntime
+    | FetchStrategy.CacheComponentsRuntime
     | FetchStrategy.Full,
   dynamicRequestTree: FlightRouterState,
   spawnedEntries: Map<SegmentCacheKey, PendingSegmentCacheEntry>
@@ -1503,7 +1503,7 @@ export async function fetchSegmentPrefetchesUsingDynamicRequest(
       // all the same data in the response.
       break
     }
-    case FetchStrategy.PPRRuntime: {
+    case FetchStrategy.CacheComponentsRuntime: {
       headers[NEXT_ROUTER_PREFETCH_HEADER] = '2'
       break
     }
@@ -1565,7 +1565,7 @@ export async function fetchSegmentPrefetchesUsingDynamicRequest(
     ) as Promise<NavigationFlightResponse>)
 
     const isResponsePartial =
-      fetchStrategy === FetchStrategy.PPRRuntime
+      fetchStrategy === FetchStrategy.CacheComponentsRuntime
         ? // A runtime prefetch may have holes.
           !!response.headers.get(NEXT_DID_POSTPONE_HEADER)
         : // Full and LoadingBoundary prefetches cannot have holes.
@@ -1600,14 +1600,14 @@ function writeDynamicTreeResponseIntoCache(
   task: PrefetchTask,
   fetchStrategy:
     | FetchStrategy.LoadingBoundary
-    | FetchStrategy.PPRRuntime
+    | FetchStrategy.CacheComponentsRuntime
     | FetchStrategy.Full,
   response: RSCResponse,
   serverData: NavigationFlightResponse,
   entry: PendingRouteCacheEntry,
   couldBeIntercepted: boolean,
   canonicalUrl: string,
-  routeIsPPREnabled: boolean
+  routeIsCacheComponentsEnabled: boolean
 ) {
   // Get the URL that was used to render the target page. This may be different
   // from the URL in the request URL, if the page was rewritten.
@@ -1660,7 +1660,7 @@ function writeDynamicTreeResponseIntoCache(
     couldBeIntercepted,
     canonicalUrl,
     renderedSearch,
-    routeIsPPREnabled
+    routeIsCacheComponentsEnabled
   )
 
   // If the server sent segment data as part of the response, we should write
@@ -1668,10 +1668,11 @@ function writeDynamicTreeResponseIntoCache(
   //
   // TODO: When `clientSegmentCache` is enabled, the server does not include
   // segment data when responding to a route tree prefetch request. However,
-  // when `clientSegmentCache` is set to "client-only", and PPR is enabled (or
-  // the page is fully static), the normal check is bypassed and the server
-  // responds with the full page. This is a temporary situation until we can
-  // remove the "client-only" option. Then, we can delete this function call.
+  // when `clientSegmentCache` is set to "client-only", and cache components is
+  // enabled (or the page is fully static), the normal check is bypassed and the
+  // server responds with the full page. This is a temporary situation until we
+  // can remove the "client-only" option. Then, we can delete this function
+  // call.
   writeDynamicRenderResponseIntoCache(
     now,
     task,
@@ -1704,7 +1705,7 @@ function writeDynamicRenderResponseIntoCache(
   task: PrefetchTask,
   fetchStrategy:
     | FetchStrategy.LoadingBoundary
-    | FetchStrategy.PPRRuntime
+    | FetchStrategy.CacheComponentsRuntime
     | FetchStrategy.Full,
   response: RSCResponse,
   serverData: NavigationFlightResponse,
@@ -1808,10 +1809,11 @@ function writeDynamicRenderResponseIntoCache(
   // Any entry that's still pending was intentionally not rendered by the
   // server, because it was inside the loading boundary. Mark them as rejected
   // so we know not to fetch them again.
-  // TODO: If PPR is enabled on some routes but not others, then it's possible
-  // that a different page is able to do a per-segment prefetch of one of the
-  // segments we're marking as rejected here. We should mark on the segment
-  // somehow that the reason for the rejection is because of a non-PPR prefetch.
+  // TODO: If cache components is enabled on some routes but not others, then
+  // it's possible that a different page is able to do a per-segment prefetch
+  // of one of the segments we're marking as rejected here. We should mark on
+  // the segment somehow that the reason for the rejection is because of a
+  // non-cache components prefetch.
   // That way a per-segment prefetch knows to disregard the rejection.
   if (spawnedEntries !== null) {
     const fulfilledEntries = rejectSegmentEntriesIfStillPending(
@@ -1828,7 +1830,7 @@ function writeSeedDataIntoCache(
   task: PrefetchTask,
   fetchStrategy:
     | FetchStrategy.LoadingBoundary
-    | FetchStrategy.PPRRuntime
+    | FetchStrategy.CacheComponentsRuntime
     | FetchStrategy.Full,
   route: FulfilledRouteCacheEntry,
   staleAt: number,
@@ -1845,7 +1847,8 @@ function writeSeedDataIntoCache(
   // (CacheNodeSeedData) into the prefetch cache. It's used in cases where we
   // want to treat a dynamic response as if it were static. The two examples
   // where this happens are <Link prefetch={true}> (which implicitly opts
-  // dynamic data into being static) and when prefetching a PPR-disabled route
+  // dynamic data into being static) and when prefetching a cache components-
+  // disabled route
   const rsc = seedData[1]
   const loading = seedData[3]
   const isPartial = rsc === null || isResponsePartial
@@ -1964,12 +1967,12 @@ function createPrefetchResponseStream(
   onStreamClose: () => void,
   onResponseSizeUpdate: (size: number) => void
 ): ReadableStream<Uint8Array> {
-  // When PPR is enabled, prefetch streams may contain references that never
-  // resolve, because that's how we encode dynamic data access. In the decoded
-  // object returned by the Flight client, these are reified into hanging
-  // promises that suspend during render, which is effectively what we want.
-  // The UI resolves when it switches to the dynamic data stream
-  // (via useDeferredValue(dynamic, static)).
+  // When cache components is enabled, prefetch streams may contain references
+  // that never resolve, because that's how we encode dynamic data access. In
+  // the decoded object returned by the Flight client, these are reified into
+  // hanging promises that suspend during render, which is effectively what we
+  // want. The UI resolves when it switches to the dynamic data stream (via
+  // useDeferredValue(dynamic, static)).
   //
   // However, the Flight implementation currently errors if the server closes
   // the response before all the references are resolved. As a cheat to work

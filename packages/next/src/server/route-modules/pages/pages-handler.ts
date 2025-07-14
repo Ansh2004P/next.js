@@ -463,7 +463,6 @@ export const getHandler = ({
                 {
                   routeKind: RouteKind.PAGES,
                   isFallback: true,
-                  isRoutePPREnabled: false,
                   isOnDemandRevalidate: false,
                   incrementalCache: await routeModule.getIncrementalCache(
                     req,

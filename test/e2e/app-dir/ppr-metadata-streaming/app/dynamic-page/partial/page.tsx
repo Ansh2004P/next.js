@@ -27,6 +27,8 @@ async function NestedSuspendedComponent() {
 }
 
 export async function generateMetadata() {
+  'use cache'
+
   // Slow but static metadata
   await new Promise((resolve) => setTimeout(resolve, 2 * 1000))
   return {

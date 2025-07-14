@@ -2,7 +2,8 @@ import { nextTestSetup } from 'e2e-utils'
 import { join } from 'path'
 import { createSandbox } from 'development-sandbox'
 
-const isPPREnabled = process.env.__NEXT_EXPERIMENTAL_PPR === 'true'
+const isCacheComponentsEnabled =
+  process.env.__NEXT_EXPERIMENTAL_CACHE_COMPONENTS === 'true'
 
 describe('app-root-params - cache - at runtime', () => {
   const { next, isNextDev, skipped } = nextTestSetup({
@@ -23,8 +24,8 @@ describe('app-root-params - cache - at runtime', () => {
       )
       const { session } = sandbox
       await session.assertHasRedbox()
-      if (isPPREnabled) {
-        // When PPR is enabled we verify that we have at least one root param value from generateStaticParams
+      if (isCacheComponentsEnabled) {
+        // When Cache Components is enabled we verify that we have at least one root param value from generateStaticParams
         // Which this test does not define so we get a different error which preempts the root params error
         expect(await session.getRedboxDescription()).toInclude(
           'Required root params (lang, locale) were not provided in generateStaticParams'
@@ -44,8 +45,8 @@ describe('app-root-params - cache - at runtime', () => {
       )
       const { session } = sandbox
       await session.assertHasRedbox()
-      if (isPPREnabled) {
-        // When PPR is enabled we verify that we have at least one root param value from generateStaticParams
+      if (isCacheComponentsEnabled) {
+        // When Cache Components is enabled we verify that we have at least one root param value from generateStaticParams
         // Which this test does not define so we get a different error which preempts the root params error
         expect(await session.getRedboxDescription()).toInclude(
           'Required root params (lang, locale) were not provided in generateStaticParams'
@@ -66,8 +67,8 @@ describe('app-root-params - cache - at runtime', () => {
     })
 
     it('should error when using rootParams within a "use cache" - start', async () => {
-      if (isPPREnabled) {
-        // When PPR is enabled we verify that we have at least one root param value from generateStaticParams
+      if (isCacheComponentsEnabled) {
+        // When Cache Components is enabled we verify that we have at least one root param value from generateStaticParams
         // Which this test does not define so we get a different error which preempts the root params error
         expect(next.cliOutput).toInclude(
           'Required root params (lang, locale) were not provided in generateStaticParams'
@@ -81,8 +82,8 @@ describe('app-root-params - cache - at runtime', () => {
     })
 
     it('should error when using rootParams within `unstable_cache` - start', async () => {
-      if (isPPREnabled) {
-        // When PPR is enabled we verify that we have at least one root param value from generateStaticParams
+      if (isCacheComponentsEnabled) {
+        // When Cache Components is enabled we verify that we have at least one root param value from generateStaticParams
         // Which this test does not define so we get a different error which preempts the root params error
         expect(next.cliOutput).toInclude(
           'Required root params (lang, locale) were not provided in generateStaticParams'

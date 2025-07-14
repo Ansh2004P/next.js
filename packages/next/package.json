@@ -83,6 +83,7 @@
   },
   "scripts": {
     "dev": "cross-env NEXT_SERVER_NO_MANGLE=1 taskr",
+    "dev-debug": "cross-env NEXT_SERVER_NO_MANGLE=1 NEXT_DEBUG=1 taskr",
     "release": "taskr release",
     "build": "pnpm release",
     "prepublishOnly": "cd ../../ && turbo run build",

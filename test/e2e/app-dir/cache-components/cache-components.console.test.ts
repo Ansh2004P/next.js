@@ -29,7 +29,20 @@ describe('cache-components', () => {
       )[1]
 
       expect(cliOutputFromPage).toMatchInlineSnapshot(`
-       "/console: template(one: one, two: two)
+       "[2;38;2;124;124;124m/console: template(one: one, two: two)[0m
+       [2;38;2;124;124;124m/console: This is a console page[0m
+       [2;38;2;124;124;124m/console: not a template[0m { foo: [32m'just-some-object'[39m }
+       [2;38;2;124;124;124mError: /console: test
+           at ConsolePage (app/console/page.tsx:5:17)
+         3 |   console.log('/console: This is a console page')
+         4 |   console.warn('/console: not a template', { foo: 'just-some-object' })
+       > 5 |   console.error(new Error('/console: test'))
+           |                 ^
+         6 |   console.assert(
+         7 |     false,
+         8 |     '/console: This is an assert message with a %s',[0m
+       [2;38;2;124;124;124mAssertion failed: [2;38;2;124;124;124m/console: This is an assert message with a template[0m[0m
+       /console: template(one: one, two: two)
        /console: This is a console page
        /console: not a template { foo: [32m'just-some-object'[39m }
        Error: /console: test
@@ -91,7 +104,8 @@ describe('cache-components', () => {
       )
       expect(pageInvocations).toHaveLength(
         isTurbopack
-          ? // TODO: Why?
+          ? // Turbopack prints a more comprehensive stack trace which includes
+            // original lines (which also includes the console log lines).
             4
           : 2
       )

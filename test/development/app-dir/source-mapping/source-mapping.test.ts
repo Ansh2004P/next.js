@@ -1,8 +1,8 @@
 import { nextTestSetup } from 'e2e-utils'
 import { retry } from 'next-test-utils'
 
-const isCacheComponentsEnabled =
-  process.env.__NEXT_EXPERIMENTAL_CACHE_COMPONENTS === 'true'
+const isRSPackEnabled =
+  process.env.NEXT_RSPACK === '1' && process.env.NEXT_TEST_USE_RSPACK === '1'
 
 describe('source-mapping', () => {
   const { next } = nextTestSetup({
@@ -172,18 +172,35 @@ describe('source-mapping', () => {
   it('should show an error when client functions are called from server components', async () => {
     const browser = await next.browser('/server-client')
 
-    await expect(browser).toDisplayRedbox(`
-     {
-       "description": "Attempted to call useClient() from the server but useClient is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.",
-       "environmentLabel": "${isCacheComponentsEnabled ? 'Prerender' : 'Server'}",
-       "label": "Runtime Error",
-       "source": "app/server-client/page.js (5:12) @ Component
-     > 5 |   useClient()
-         |            ^",
-       "stack": [
-         "Component app/server-client/page.js (5:12)",
-       ],
-     }
-    `)
+    if (isRSPackEnabled) {
+      await expect(browser).toDisplayRedbox(`
+            {
+              "description": "Attempted to call useClient() from the server but useClient is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.",
+              "environmentLabel": "Prerender",
+              "label": "Runtime Error",
+              "source": "app/server-client/page.js (5:12) @ Component
+            > 5 |   useClient()
+                |            ^",
+              "stack": [
+                "eval about:/Prerender/webpack-internal:///(rsc)/app/server-client/client.js (10:20)",
+                "Component app/server-client/page.js (5:12)",
+              ],
+            }
+          `)
+    } else {
+      await expect(browser).toDisplayRedbox(`
+       {
+         "description": "Attempted to call useClient() from the server but useClient is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.",
+         "environmentLabel": "Prerender",
+         "label": "Runtime Error",
+         "source": "app/server-client/page.js (5:12) @ Component
+       > 5 |   useClient()
+           |            ^",
+         "stack": [
+           "Component app/server-client/page.js (5:12)",
+         ],
+       }
+      `)
+    }
   })
 })

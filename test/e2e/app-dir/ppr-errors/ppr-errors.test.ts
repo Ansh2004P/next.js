@@ -23,9 +23,6 @@ describe('ppr build errors', () => {
           expect(stderr).toContain(
             'Error occurred prerendering page "/regular-error-suspense-boundary".'
           )
-          expect(stderr).toContain(
-            'Error occurred prerendering page "/re-throwing-error".'
-          )
         })
       })
 
@@ -40,10 +37,10 @@ describe('ppr build errors', () => {
         })
       })
 
-      describe('when a postpone call is caught and logged it should', () => {
+      describe('when a hanging promise error is caught and logged it should', () => {
         it('should include a message telling why', async () => {
           expect(stdout).toContain(
-            'User land logged error: Route /logging-error needs to bail out of prerendering at this point because it used cookies.'
+            'User land logged error: During prerendering, `cookies()` rejects when the prerender is complete. Typically these errors are handled by React but if you move `cookies()` to a different context by using `setTimeout`, `after`, or similar functions you may observe this error and you should handle it in that context.'
           )
         })
       })
