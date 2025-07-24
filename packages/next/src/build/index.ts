@@ -107,6 +107,7 @@ import {
 import type { EventBuildFeatureUsage } from '../telemetry/events'
 import { Telemetry } from '../telemetry/storage'
 import {
+  copyMetadataStaticFiles,
   createPagesMapping,
   collectAppFiles,
   getStaticInfoIncludingLayouts,
@@ -1258,6 +1259,18 @@ export default async function build(
               pageExtensions: config.pageExtensions,
               pagesDir,
               appDir,
+            })
+          )
+
+        await nextBuildSpan
+          .traceChild('metadata-static-file-mapping')
+          .traceAsyncFn(() =>
+            copyMetadataStaticFiles({
+              appDir,
+              pagesType: PAGE_TYPES.APP,
+              pagePaths: appPaths,
+              distDir,
+              pageExtensions: config.pageExtensions,
             })
           )
 
