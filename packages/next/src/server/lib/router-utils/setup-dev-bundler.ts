@@ -407,7 +407,7 @@ async function startWatcher(
 
           // File exists (either new or changed)
           if (watchTimeChange) {
-            const relativePath = path.relative(appDir, fileName)
+            const relativePath = `/${path.relative(appDir, fileName)}`
             try {
               await copyMetadataStaticFiles({
                 appDir,
@@ -1043,7 +1043,7 @@ async function startWatcher(
         prevSortedRoutes = sortedRoutes
 
         // Handle deleted metadata files
-        if (appDir && previousMetadataFiles.size > 0) {
+        if (appDir) {
           for (const previousFile of previousMetadataFiles) {
             if (!currentMetadataFiles.has(previousFile)) {
               const relativePath = path.relative(appDir, previousFile)
