@@ -21,8 +21,9 @@ use turbo_tasks_bytes::stream::SingleValue;
 use turbo_tasks_env::CommandLineProcessEnv;
 use turbo_tasks_fs::{
     DiskFileSystem, FileContent, FileSystem, FileSystemEntryType, FileSystemPath,
-    json::parse_json_with_source_context, util::sys_to_unix,
+    json::parse_json_with_source_context,
 };
+use turbo_unix_path::sys_to_unix;
 use turbopack::{
     ModuleAssetContext,
     css::chunk::CssChunkType,
@@ -290,7 +291,7 @@ async fn prepare_test(resource: RcStr) -> Result<Vc<PreparedTest>> {
         &*REPO_ROOT,
         resource_path.display()
     ))?;
-    let relative_path: RcStr = sys_to_unix(relative_path.to_str().unwrap()).into();
+    let relative_path = RcStr::from(sys_to_unix(relative_path.to_str().unwrap()));
     let path = root_fs.root().await?.join(&relative_path.clone())?;
     let project_path = project_root.join(&relative_path.clone())?;
     let tests_path = project_fs

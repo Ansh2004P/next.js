@@ -15,9 +15,8 @@ use turbo_tasks::{
     FxIndexMap, FxIndexSet, NonLocalValue, ReadRef, ResolvedVc, SliceMap, TaskInput,
     TryJoinIterExt, ValueToString, Vc, trace::TraceRawVcs,
 };
-use turbo_tasks_fs::{
-    FileSystemEntryType, FileSystemPath, RealPathResult, util::normalize_request,
-};
+use turbo_tasks_fs::{FileSystemEntryType, FileSystemPath, RealPathResult};
+use turbo_unix_path::normalize_request;
 
 use self::{
     options::{
@@ -2108,7 +2107,7 @@ async fn resolve_into_folder(
                         .await?
                     && let Some(field_value) = package_json[name.as_str()].as_str()
                 {
-                    let normalized_request: RcStr = normalize_request(field_value).into();
+                    let normalized_request = RcStr::from(normalize_request(field_value));
                     if normalized_request.is_empty()
                         || &*normalized_request == "."
                         || &*normalized_request == "./"

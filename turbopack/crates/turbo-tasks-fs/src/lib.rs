@@ -59,16 +59,21 @@ use turbo_tasks::{
     mark_session_dependent, mark_stateful, trace::TraceRawVcs,
 };
 use turbo_tasks_hash::{DeterministicHash, DeterministicHasher, hash_xxh3_hash64};
+use turbo_unix_path::{
+    get_parent_path, get_relative_path_to, join_path, normalize_path, sys_to_unix, unix_to_sys,
+};
 
-use self::{invalidation::Write, json::UnparsableJson, mutex_map::MutexMap};
 use crate::{
     attach::AttachedFileSystem,
     glob::Glob,
+    invalidation::Write,
     invalidator_map::{InvalidatorMap, WriteContent},
+    json::UnparsableJson,
+    mutex_map::MutexMap,
     read_glob::{read_glob, track_glob},
     retry::retry_blocking,
     rope::{Rope, RopeReader},
-    util::{extract_disk_access, join_path, normalize_path, sys_to_unix, unix_to_sys},
+    util::extract_disk_access,
     watcher::DiskWatcher,
 };
 pub use crate::{read_glob::ReadGlobResult, virtual_fs::VirtualFileSystem};
@@ -1000,39 +1005,6 @@ impl ValueToString for DiskFileSystem {
     }
 }
 
-/// Note: this only works for Unix-style paths (with `/` as a separator).
-pub fn get_relative_path_to(path: &str, other_path: &str) -> String {
-    fn split(s: &str) -> impl Iterator<Item = &str> {
-        let empty = s.is_empty();
-        let mut iterator = s.split('/');
-        if empty {
-            iterator.next();
-        }
-        iterator
-    }
-
-    let mut self_segments = split(path).peekable();
-    let mut other_segments = split(other_path).peekable();
-    while self_segments.peek() == other_segments.peek() {
-        self_segments.next();
-        if other_segments.next().is_none() {
-            return ".".to_string();
-        }
-    }
-    let mut result = Vec::new();
-    if self_segments.peek().is_none() {
-        result.push(".");
-    } else {
-        while self_segments.next().is_some() {
-            result.push("..");
-        }
-    }
-    for segment in other_segments {
-        result.push(segment);
-    }
-    result.join("/")
-}
-
 #[turbo_tasks::value(shared)]
 #[derive(Debug, Clone, Hash, TaskInput)]
 pub struct FileSystemPath {
@@ -1456,11 +1428,7 @@ impl FileSystemPath {
         if path.is_empty() {
             return self.clone();
         }
-        let p = match str::rfind(path, '/') {
-            Some(index) => path[..index].to_string(),
-            None => "".to_string(),
-        };
-        FileSystemPath::new_normalized(self.fs, p.into())
+        FileSystemPath::new_normalized(self.fs, RcStr::from(get_parent_path(path)))
     }
 
     // It is important that get_type uses read_dir and not stat/metadata.

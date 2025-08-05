@@ -10,6 +10,7 @@ members = [
   "crates/next-build",
   "crates/next-core",
   "crates/next-custom-transforms",
+  "crates/next-taskless",
   "turbopack/crates/*",
   "turbopack/crates/*/fuzz",
   "turbopack/xtask",
@@ -252,6 +253,7 @@ next-api = { path = "crates/next-api" }
 next-build = { path = "crates/next-build" }
 next-core = { path = "crates/next-core" }
 next-custom-transforms = { path = "crates/next-custom-transforms" }
+next-taskless = { path = "crates/next-taskless" }
 
 # Turbopack
 auto-hash-map = { path = "turbopack/crates/turbo-tasks-auto-hash-map" }
@@ -260,6 +262,7 @@ turbo-rcstr = { path = "turbopack/crates/turbo-rcstr" }
 turbo-dyn-eq-hash = { path = "turbopack/crates/turbo-dyn-eq-hash" }
 turbo-esregex = { path = "turbopack/crates/turbo-esregex" }
 turbo-persistence = { path = "turbopack/crates/turbo-persistence" }
+turbo-unix-path = { path = "turbopack/crates/turbo-unix-path" }
 turbo-tasks-malloc = { path = "turbopack/crates/turbo-tasks-malloc", default-features = false }
 turbo-tasks = { path = "turbopack/crates/turbo-tasks" }
 turbo-tasks-backend = { path = "turbopack/crates/turbo-tasks-backend" }

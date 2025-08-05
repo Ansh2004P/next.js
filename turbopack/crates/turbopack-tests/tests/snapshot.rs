@@ -16,8 +16,8 @@ use turbo_tasks_backend::{BackendOptions, TurboTasksBackend, noop_backing_storag
 use turbo_tasks_env::DotenvProcessEnv;
 use turbo_tasks_fs::{
     DiskFileSystem, FileSystem, FileSystemPath, json::parse_json_with_source_context,
-    util::sys_to_unix,
 };
+use turbo_unix_path::sys_to_unix;
 use turbopack::{
     ModuleAssetContext,
     ecmascript::{EcmascriptInputTransform, TreeShakingMode, chunk::EcmascriptChunkType},
@@ -264,7 +264,7 @@ async fn run_test_operation(resource: RcStr) -> Result<Vc<FileSystemPath>> {
     let project_root = project_fs.root().owned().await?;
 
     let relative_path = test_path.strip_prefix(&*REPO_ROOT)?;
-    let relative_path: RcStr = sys_to_unix(relative_path.to_str().unwrap()).into();
+    let relative_path = RcStr::from(sys_to_unix(relative_path.to_str().unwrap()));
     let project_path = project_root.join(&relative_path)?;
 
     let project_path_to_project_root = project_path
