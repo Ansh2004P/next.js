@@ -775,5 +775,5 @@
   "774": "Route %s used %s outside of a Server Component. This is not allowed.",
   "775": "Node.js instrumentation extensions should not be loaded in the Edge runtime.",
   "776": "`unstable_isUnrecognizedActionError` can only be used on the client.",
-  "777": "File size for %s image %s exceeds %sMB. (Current: %sMB)\\nRead more: https://nextjs.org/docs/app/api-reference/file-conventions/metadata/opengraph-image#image-files-jpg-png-gif"
+  "777": "File size for %s image \"%s\" exceeds %sMB. (Current: %sMB)\\nRead more: https://nextjs.org/docs/app/api-reference/file-conventions/metadata/opengraph-image#image-files-jpg-png-gif"
 }
