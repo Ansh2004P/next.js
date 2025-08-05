@@ -65,6 +65,10 @@ export async function exportAppPage(
     isDefaultNotFound = true
     pathname = '/404'
   }
+  // If the page is `/_global-error`, generate a static 500 page with fixed content
+  if (page === '/_global-error/page') {
+    pathname = '/500'
+  }
 
   try {
     const result = await lazyRenderAppPage(

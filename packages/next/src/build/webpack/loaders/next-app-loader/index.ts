@@ -21,7 +21,7 @@ import { isAppRouteRoute } from '../../../../lib/is-app-route-route'
 import type { NextConfig } from '../../../../server/config-shared'
 import { AppPathnameNormalizer } from '../../../../server/normalizers/built/app/app-pathname-normalizer'
 import type { MiddlewareConfig } from '../../../analysis/get-page-static-info'
-import { isAppBuiltinNotFoundPage } from '../../../utils'
+import { isAppBuiltinPage } from '../../../utils'
 import { loadEntrypoint } from '../../../load-entrypoint'
 import {
   isGroupSegment,
@@ -153,7 +153,7 @@ async function createTreeCodeFromPath(
 }> {
   const splittedPath = pagePath.split(/[\\/]/, 1)
   const isNotFoundRoute = page === UNDERSCORE_NOT_FOUND_ROUTE_ENTRY
-  const isDefaultNotFound = isAppBuiltinNotFoundPage(pagePath)
+  const isDefaultNotFound = isAppBuiltinPage(pagePath)
 
   const appDirPrefix = isDefaultNotFound ? APP_DIR_ALIAS : splittedPath[0]
   const pages: string[] = []

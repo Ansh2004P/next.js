@@ -77,6 +77,7 @@ import {
   SERVER_REFERENCE_MANIFEST,
   FUNCTIONS_CONFIG_MANIFEST,
   UNDERSCORE_NOT_FOUND_ROUTE_ENTRY,
+  UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY,
   UNDERSCORE_NOT_FOUND_ROUTE,
   DYNAMIC_CSS_MANIFEST,
   TURBOPACK_CLIENT_MIDDLEWARE_MANIFEST,
@@ -132,7 +133,7 @@ import {
   printTreeView,
   copyTracedFiles,
   isReservedPage,
-  isAppBuiltinNotFoundPage,
+  isAppBuiltinPage,
   collectRoutesUsingEdgeRuntime,
   collectMeta,
 } from './utils'
@@ -1372,6 +1373,8 @@ export default async function build(
       const conflictingPublicFiles: string[] = []
       const hasPages404 = mappedPages['/404']?.startsWith(PAGES_DIR_ALIAS)
       const hasApp404 = !!mappedAppPages?.[UNDERSCORE_NOT_FOUND_ROUTE_ENTRY]
+      const hasAppGlobalError =
+        !!mappedAppPages?.[UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY]
       const hasCustomErrorPage =
         mappedPages['/_error']?.startsWith(PAGES_DIR_ALIAS)
 
@@ -2022,10 +2025,8 @@ export default async function build(
                   }
                 }
 
-                const pageFilePath = isAppBuiltinNotFoundPage(pagePath)
-                  ? require.resolve(
-                      'next/dist/client/components/builtin/not-found'
-                    )
+                const pageFilePath = isAppBuiltinPage(pagePath)
+                  ? pagePath
                   : path.join(
                       (pageType === 'pages' ? pagesDir : appDir) || '',
                       pagePath
@@ -2742,6 +2743,11 @@ export default async function build(
       const combinedPages = [...staticPages, ...ssgPages]
       const isApp404Static = staticPaths.has(UNDERSCORE_NOT_FOUND_ROUTE_ENTRY)
       const hasStaticApp404 = hasApp404 && isApp404Static
+      const isAppGlobalErrorStatic = staticPaths.has(
+        UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY
+      )
+      const hasStaticAppGlobalError =
+        hasAppGlobalError && isAppGlobalErrorStatic
 
       await updateBuildDiagnostics({
         buildStage: 'static-generation',
@@ -2838,6 +2844,19 @@ export default async function build(
               if (useDefaultStatic500 && hasUserPagesRoutes) {
                 defaultMap['/500'] = {
                   page: '/_error',
+                }
+              }
+
+              // If there's /global-error inside app and no user pages in pages router, use app router global error for 500
+              if (
+                hasStaticAppGlobalError &&
+                !hasUserPagesRoutes &&
+                mappedAppPages &&
+                Object.keys(mappedAppPages).length > 0
+              ) {
+                defaultMap['/500'] = {
+                  page: UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY,
+                  _isAppDir: true,
                 }
               }
 
@@ -3576,6 +3595,36 @@ export default async function build(
               })
           }
 
+          async function moveExportedAppGlobalErrorTo500() {
+            return staticGenerationSpan
+              .traceChild('move-exported-app-global-error-')
+              .traceAsyncFn(async () => {
+                // Only handle 500.html generation for static export
+                const orig = path.join(
+                  distDir,
+                  'server',
+                  'app',
+                  '_global-error.html'
+                )
+                if (existsSync(orig)) {
+                  const updatedRelativeDest = path.join(
+                    distDir,
+                    'server',
+                    'pages',
+                    '500.html'
+                  )
+
+                  // if 500.html folder doesn't exist, create it
+                  await fs.mkdir(path.dirname(updatedRelativeDest), {
+                    recursive: true,
+                  })
+                  await fs.copyFile(orig, updatedRelativeDest)
+
+                  pagesManifest['/500'] = updatedRelativeDest
+                }
+              })
+          }
+
           // If there's /not-found inside app, we prefer it over the pages 404
           if (hasStaticApp404) {
             await moveExportedAppNotFoundTo404()
@@ -3587,10 +3636,18 @@ export default async function build(
           }
 
           if (useDefaultStatic500 && hasUserPagesRoutes) {
-            console.log('move static 500')
             await moveExportedPage('/_error', '/500', '/500', false, 'html')
           }
-          // TODO: generate app router 500.html if app router is present
+
+          // If there's /global-error inside app and no user pages in pages router, use app router global error for 500
+          if (
+            hasStaticAppGlobalError &&
+            !hasUserPagesRoutes &&
+            mappedAppPages &&
+            Object.keys(mappedAppPages).length > 0
+          ) {
+            await moveExportedAppGlobalErrorTo500()
+          }
 
           for (const page of combinedPages) {
             const isSsg = ssgPages.has(page)
