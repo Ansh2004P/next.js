@@ -1051,7 +1051,7 @@ async function startWatcher(
                 distDir,
                 'static',
                 'metadata',
-                relativePath.replace(/\\/g, '/')
+                relativePath
               )
 
               try {
