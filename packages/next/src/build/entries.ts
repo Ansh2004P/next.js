@@ -27,6 +27,7 @@ import { isEdgeRuntime } from '../lib/is-edge-runtime'
 import {
   APP_CLIENT_INTERNALS,
   RSC_MODULE_TYPES,
+  UNDERSCORE_NOT_FOUND_ROUTE,
   UNDERSCORE_NOT_FOUND_ROUTE_ENTRY,
 } from '../shared/lib/constants'
 import {
@@ -217,10 +218,10 @@ export function extractSlotsFromAppRoutes(mappedAppPages: {
 }): SlotInfo[] {
   const slots: SlotInfo[] = []
 
-  for (const [route] of Object.entries(mappedAppPages)) {
-    if (route === '/_not-found/page') continue
+  for (const [page] of Object.entries(mappedAppPages)) {
+    if (page === UNDERSCORE_NOT_FOUND_ROUTE_ENTRY) continue
 
-    const segments = route.split('/')
+    const segments = page.split('/')
     for (let i = segments.length - 1; i >= 0; i--) {
       const segment = segments[i]
       if (isParallelRouteSegment(segment)) {
@@ -255,13 +256,13 @@ export function processAppRoutes(
 ): RouteInfo[] {
   const appRoutes: RouteInfo[] = []
 
-  for (const [route, filePath] of Object.entries(mappedAppPages)) {
-    if (route === '/_not-found/page') continue
+  for (const [page, filePath] of Object.entries(mappedAppPages)) {
+    if (page === UNDERSCORE_NOT_FOUND_ROUTE_ENTRY) continue
 
     const relativeFilePath = createRelativeFilePath(baseDir, filePath, 'app')
 
     appRoutes.push({
-      route: normalizeAppPath(normalizePathSep(route)),
+      route: normalizeAppPath(normalizePathSep(page)),
       filePath: relativeFilePath,
     })
   }
@@ -467,7 +468,7 @@ export async function createPagesMapping({
     let pageKey = getPageFromPath(pagePath, pageExtensions)
     if (isAppRoute) {
       pageKey = pageKey.replace(/%5F/g, '_')
-      if (pageKey === '/not-found') {
+      if (pageKey === UNDERSCORE_NOT_FOUND_ROUTE) {
         pageKey = UNDERSCORE_NOT_FOUND_ROUTE_ENTRY
       }
     }
