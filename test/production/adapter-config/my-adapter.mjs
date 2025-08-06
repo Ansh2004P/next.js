@@ -7,6 +7,10 @@ const myAdapter = {
     config.basePath = '/docs'
     return config
   },
+  onBuildComplete: (ctx) => {
+    console.log('onBuildComplete')
+    console.log(ctx)
+  },
 }
 
 export default myAdapter

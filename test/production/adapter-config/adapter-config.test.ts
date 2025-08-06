@@ -6,11 +6,11 @@ describe('adapter-config', () => {
   })
 
   it('should apply modifyConfig from adapter', async () => {
-    // we apply basePath /docs so ensure that applied
+    // we apply basePath of "/docs" to ensure modify was called
     const res = await next.fetch('/')
     expect(res.status).toBe(404)
 
-    const res2 = await next.fetch('/docs')
+    const res2 = await next.fetch('/docs/node-pages')
     expect(res2.status).toBe(200)
     expect(await res2.text()).toContain('hello world')
 
