@@ -543,7 +543,7 @@ export async function createPagesMapping({
         // If there's any custom /_global-error page, it will override the default one.
         ...(hasAppPages && {
           [UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY]: require.resolve(
-            'next/dist/client/components/builtin/global-error'
+            'next/dist/esm/client/components/builtin/app-error'
           ),
         }),
         ...pages,

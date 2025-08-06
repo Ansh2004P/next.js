@@ -1760,7 +1760,9 @@ export function isReservedPage(page: string) {
 }
 
 export function isAppBuiltinPage(page: string) {
-  return /next[\\/]dist[\\/]client[\\/]components[\\/]builtin[\\/]/.test(page)
+  return /next[\\/]dist[\\/](esm[\\/])?client[\\/]components[\\/]builtin[\\/]/.test(
+    page
+  )
 }
 
 export function isCustomErrorPage(page: string) {

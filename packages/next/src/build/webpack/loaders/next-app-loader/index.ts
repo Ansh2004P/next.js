@@ -1,5 +1,7 @@
 import type webpack from 'next/dist/compiled/webpack/webpack'
 import {
+  UNDERSCORE_GLOBAL_ERROR_ROUTE,
+  UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY,
   UNDERSCORE_NOT_FOUND_ROUTE,
   UNDERSCORE_NOT_FOUND_ROUTE_ENTRY,
   type ValueOf,
@@ -81,6 +83,8 @@ const PARALLEL_VIRTUAL_SEGMENT = 'slot$'
 
 const defaultGlobalErrorPath =
   'next/dist/client/components/builtin/global-error.js'
+const defaultAppErrorPath =
+  'next/dist/esm/client/components/builtin/app-error.js'
 const defaultNotFoundPath = 'next/dist/client/components/builtin/not-found.js'
 const defaultLayoutPath = 'next/dist/client/components/builtin/layout.js'
 const defaultGlobalNotFoundPath =
@@ -152,8 +156,12 @@ async function createTreeCodeFromPath(
   globalNotFound: string
 }> {
   const splittedPath = pagePath.split(/[\\/]/, 1)
+  // const baseName = splittedPath[splittedPath.length - 1]
   const isNotFoundRoute = page === UNDERSCORE_NOT_FOUND_ROUTE_ENTRY
-  const isDefaultNotFound = isAppBuiltinPage(pagePath)
+  const isAppErrorRoute = page === UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY
+  const isDefaultNotFound = isAppBuiltinPage(pagePath) // && (baseName === 'global-not-found' || baseName === 'not-found')
+  // const isDefaultAppError = isAppBuiltinPage(pagePath) // && (baseName === 'app-error')
+  // console.log('isDefaultAppError', isDefaultAppError, 'page',  page, 'baseName', baseName)
 
   const appDirPrefix = isDefaultNotFound ? APP_DIR_ALIAS : splittedPath[0]
   const pages: string[] = []
@@ -161,6 +169,7 @@ async function createTreeCodeFromPath(
   let rootLayout: string | undefined
   let globalError: string = defaultGlobalErrorPath
   let globalNotFound: string = defaultNotFoundPath
+  let appError: string = defaultAppErrorPath
 
   async function resolveAdjacentParallelSegments(
     segmentPath: string
@@ -310,6 +319,7 @@ async function createTreeCodeFromPath(
         )
         if (resolvedGlobalErrorPath) {
           globalError = resolvedGlobalErrorPath
+          appError = resolvedGlobalErrorPath
         }
         // Add global-error to root layer's filePaths, so that it's always available,
         // by default it's the built-in global-error.js
@@ -436,7 +446,7 @@ async function createTreeCodeFromPath(
             const varName = `notFound${nestedCollectedDeclarations.length}`
             nestedCollectedDeclarations.push([varName, notFoundPath])
             subtreeCode = `{
-              children: [${JSON.stringify(UNDERSCORE_NOT_FOUND_ROUTE)}, {
+              children: [${JSON.stringify(UNDERSCORE_NOT_FOUND_ROUTE.slice(1))}, {
                 children: ['${PAGE_SEGMENT_KEY}', {}, {
                   page: [
                     ${varName},
@@ -448,11 +458,32 @@ async function createTreeCodeFromPath(
           }
         }
       }
+      // If it's app-error route, set app-error as children page
+      if (isAppErrorRoute) {
+        const varName = `appError${nestedCollectedDeclarations.length}`
+        nestedCollectedDeclarations.push([varName, appError])
+        subtreeCode = `{
+          children: [${JSON.stringify(UNDERSCORE_GLOBAL_ERROR_ROUTE.slice(1))}, {
+            children: ['${PAGE_SEGMENT_KEY}', {}, {
+              page: [
+                ${varName},
+                ${JSON.stringify(appError)}
+              ]
+            }]
+          }, {}]
+        }`
+      }
 
       // For 404 route
       // if global-not-found is in definedFilePaths, remove root layout for /_not-found
       // TODO: remove this once global-not-found is stable.
       if (isNotFoundRoute && isGlobalNotFoundEnabled) {
+        definedFilePaths = definedFilePaths.filter(
+          ([type]) => type !== 'layout'
+        )
+      }
+
+      if (isAppErrorRoute) {
         definedFilePaths = definedFilePaths.filter(
           ([type]) => type !== 'layout'
         )
@@ -777,7 +808,9 @@ const nextAppLoader: AppLoader = async function nextAppLoader() {
     !!treeCodeResult.globalNotFound &&
     isGlobalNotFoundEnabled
 
-  if (!treeCodeResult.rootLayout && !isGlobalNotFoundPath) {
+  const isAppErrorRoute = page === UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY
+
+  if (!treeCodeResult.rootLayout && !isGlobalNotFoundPath && !isAppErrorRoute) {
     if (!isDev) {
       // If we're building and missing a root layout, exit the build
       Log.error(
