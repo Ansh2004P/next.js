@@ -430,7 +430,7 @@ export class FlightClientEntryPlugin {
 
         if (
           name === `app${UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY}` &&
-          bundlePath === 'app/app-error'
+          bundlePath === 'app/global-error'
         ) {
           clientEntriesToInject.push({
             compiler,
