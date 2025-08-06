@@ -1547,7 +1547,7 @@ pub async fn resolve_raw(
         if matches.len() > 10000 {
             println!(
                 "WARN: resolving pattern {} in {} leads to {} results",
-                pat,
+                pat.describe_as_string(),
                 lookup_dir_str,
                 matches.len()
             );
@@ -2059,7 +2059,7 @@ async fn resolve_internal_inline(
                 if !has_alias {
                     ResolvingIssue {
                         severity: error_severity(options).await?,
-                        request_type: format!("unknown import: `{path}`"),
+                        request_type: format!("unknown import: `{}`", path.describe_as_string()),
                         request: request.to_resolved().await?,
                         file_path: lookup_path.clone(),
                         resolve_options: options.to_resolved().await?,
@@ -2196,7 +2196,7 @@ async fn resolve_relative_request(
         options,
         options_value,
         |package_path| {
-            let request = path_pattern.as_string()?;
+            let request = path_pattern.constant_as_string()?;
             let prefix_path = package_path.get_path_to(&lookup_path_ref)?;
             let request = normalize_request(&format!("./{prefix_path}/{request}"));
             Some(request.into())
@@ -2535,7 +2535,7 @@ async fn resolve_module_request(
         options_value,
         |_| {
             let full_pattern = Pattern::concat([module.clone(), path.clone()]);
-            full_pattern.into_string()
+            full_pattern.constant_as_string().cloned()
         },
         query.clone(),
         fragment.clone(),
@@ -2622,12 +2622,9 @@ async fn resolve_module_request(
         merge_results_with_affecting_sources(results, result.affecting_sources.clone());
 
     if options_value.prefer_relative {
-        let module_prefix: RcStr = format!("./{module}").into();
-        let pattern = Pattern::concat([
-            module_prefix.clone().into(),
-            rcstr!("/").into(),
-            path.clone(),
-        ]);
+        let mut module_prefixed = module.clone();
+        module_prefixed.push_front(rcstr!("./").into());
+        let pattern = Pattern::concat([module_prefixed.clone(), rcstr!("/").into(), path.clone()]);
         let relative = Request::relative(pattern, query, fragment, true)
             .to_resolved()
             .await?;
@@ -2639,7 +2636,7 @@ async fn resolve_module_request(
         .await?;
         // TODO request key
         // let relative_result = relative_result
-        //     .with_replaced_request_key(module_prefix, RequestKey::new(module.clone()));
+        //     .with_replaced_request_key(module_prefixed, RequestKey::new(module.clone()));
 
         Ok(merge_results(vec![relative_result, module_result]))
     } else {
@@ -2676,11 +2673,11 @@ async fn resolve_into_package(
                     continue;
                 };
 
-                let Some(path) = path.clone().into_string() else {
+                let Some(path) = path.constant_as_string() else {
                     todo!("pattern into an exports field is not implemented yet");
                 };
 
-                let path = if &*path == "/" {
+                let path = if path == "/" {
                     rcstr!(".")
                 } else {
                     format!(".{path}").into()
