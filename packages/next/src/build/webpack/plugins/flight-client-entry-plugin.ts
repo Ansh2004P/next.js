@@ -24,9 +24,11 @@ import {
   DEFAULT_RUNTIME_WEBPACK,
   EDGE_RUNTIME_WEBPACK,
   SERVER_REFERENCE_MANIFEST,
-  UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY,
-  UNDERSCORE_NOT_FOUND_ROUTE_ENTRY,
 } from '../../../shared/lib/constants'
+import {
+  UNDERSCORE_NOT_FOUND_ROUTE_ENTRY,
+  UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY,
+} from '../../../shared/lib/entry-constants'
 import {
   isClientComponentEntryModule,
   isCSSMod,
@@ -51,6 +53,7 @@ import {
 import type { MetadataRouteLoaderOptions } from '../loaders/next-metadata-route-loader'
 import type { FlightActionEntryLoaderActions } from '../loaders/next-flight-action-entry-loader'
 import getWebpackBundler from '../../../shared/lib/get-webpack-bundler'
+import { isAppBuiltinPage } from '../../utils'
 
 interface Options {
   dev: boolean
@@ -144,7 +147,6 @@ function deduplicateCSSImportsForEntry(mergedCSSimports: CssImports) {
 
     const indexA = POSSIBLE_SHARED_CONVENTIONS.indexOf(aName)
     const indexB = POSSIBLE_SHARED_CONVENTIONS.indexOf(bName)
-
     if (indexA === -1) return 1
     if (indexB === -1) return -1
     return indexA - indexB
@@ -313,10 +315,11 @@ export class FlightClientEntryPlugin {
       const clientEntriesToInject = []
       const mergedCSSimports: CssImports = {}
 
-      for (const connection of getModuleReferencesInOrder(
+      const moduleReferences = getModuleReferencesInOrder(
         entryModule,
         compilation.moduleGraph
-      )) {
+      )
+      for (const connection of moduleReferences) {
         // Entry can be any user defined entry files such as layout, page, error, loading, etc.
         let entryRequest = (
           connection.dependency as unknown as webpack.NormalModule
@@ -343,9 +346,10 @@ export class FlightClientEntryPlugin {
         )
 
         const isAbsoluteRequest = path.isAbsolute(entryRequest)
+        const isAppRouterBuiltinPage = isAppBuiltinPage(entryRequest)
 
         // Next.js internals are put into a separate entry.
-        if (!isAbsoluteRequest) {
+        if (!isAbsoluteRequest && !isAppRouterBuiltinPage) {
           Object.keys(clientComponentImports).forEach(
             (value) => (internalClientComponentEntryImports[value] = new Set())
           )
@@ -358,9 +362,10 @@ export class FlightClientEntryPlugin {
         //   continue
         // }
 
-        const relativeRequest = isAbsoluteRequest
-          ? path.relative(compilation.options.context!, entryRequest)
-          : entryRequest
+        const relativeRequest =
+          isAbsoluteRequest && !isAppRouterBuiltinPage
+            ? path.relative(compilation.options.context!, entryRequest)
+            : entryRequest
 
         // Replace file suffix as `.js` will be added.
         // bundlePath will have app/ prefix but not src/.
@@ -428,10 +433,7 @@ export class FlightClientEntryPlugin {
           })
         }
 
-        if (
-          name === `app${UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY}` &&
-          bundlePath === 'app/global-error'
-        ) {
+        if (name === `app${UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY}`) {
           clientEntriesToInject.push({
             compiler,
             compilation,
@@ -828,7 +830,6 @@ export class FlightClientEntryPlugin {
   ] {
     const bundler = getWebpackBundler()
     let shouldInvalidate = false
-
     const modules = Object.keys(clientImports)
       .sort((a, b) => (regexCSS.test(b) ? 1 : a.localeCompare(b)))
       .map((clientImportPath) => ({

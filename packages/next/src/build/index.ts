@@ -76,12 +76,14 @@ import {
   MIDDLEWARE_REACT_LOADABLE_MANIFEST,
   SERVER_REFERENCE_MANIFEST,
   FUNCTIONS_CONFIG_MANIFEST,
-  UNDERSCORE_NOT_FOUND_ROUTE_ENTRY,
-  UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY,
   UNDERSCORE_NOT_FOUND_ROUTE,
   DYNAMIC_CSS_MANIFEST,
   TURBOPACK_CLIENT_MIDDLEWARE_MANIFEST,
 } from '../shared/lib/constants'
+import {
+  UNDERSCORE_NOT_FOUND_ROUTE_ENTRY,
+  UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY,
+} from '../shared/lib/entry-constants'
 import { isDynamicRoute } from '../shared/lib/router/utils'
 import type { __ApiPreviewProps } from '../server/api-utils'
 import loadConfig from '../server/config'
