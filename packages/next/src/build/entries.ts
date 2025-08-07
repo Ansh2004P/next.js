@@ -461,6 +461,7 @@ export async function createPagesMapping({
   pagesType,
   pagesDir,
   appDir,
+  appDirOnly,
 }: {
   isDev: boolean
   pageExtensions: PageExtensions
@@ -468,6 +469,7 @@ export async function createPagesMapping({
   pagesType: PAGE_TYPES
   pagesDir: string | undefined
   appDir: string | undefined
+  appDirOnly: boolean
 }): Promise<MappedPages> {
   const isAppRoute = pagesType === 'app'
   const pages: MappedPages = {}
@@ -542,7 +544,7 @@ export async function createPagesMapping({
           ),
         }),
         // App router default 500.html entry
-        ...(hasAppPages && {
+        ...(appDirOnly && {
           [UNDERSCORE_GLOBAL_ERROR_ROUTE_ENTRY]: require.resolve(
             'next/dist/client/components/builtin/app-error'
           ),
@@ -564,12 +566,14 @@ export async function createPagesMapping({
       const root = isDev && pagesDir ? PAGES_DIR_ALIAS : 'next/dist/pages'
 
       return {
-        ...(hasPagesRoutes && {
-          '/_app': `${root}/_app`,
-          '/_error': `${root}/_error`,
-          '/_document': `${root}/_document`,
-          ...pages,
-        }),
+        // Don't add default pages entries if this is an app-router-only build
+        ...(hasPagesRoutes &&
+          !appDirOnly && {
+            '/_app': `${root}/_app`,
+            '/_error': `${root}/_error`,
+            '/_document': `${root}/_document`,
+            ...pages,
+          }),
       }
     }
     default: {
